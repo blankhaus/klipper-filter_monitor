@@ -16,12 +16,12 @@ SEC_PER_DAY = 86400
 SEC_PER_HOUR = 3600
 SEC_PER_MIN  = 60
 
-FAN_TYPES = [ 
-	"fan", 
-	"fan_generic", 
-	"controller_fan", 
-	"heater_fan", 
-	"temperature_fan" 
+FAN_TYPES = [
+    "fan",
+    "fan_generic",
+    "controller_fan",
+    "heater_fan",
+    "temperature_fan"
 ]
 
 COLORS = [
@@ -38,19 +38,19 @@ class FilterMonitor:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler(
-            "klippy:connect", 
+            "klippy:connect",
             self._handle_connect
         )
         self.printer.register_event_handler(
-            "klippy:shutdown", 
+            "klippy:shutdown",
             self._handle_shutdown
         )
         self.printer.register_event_handler(
-            "klippy:ready", 
+            "klippy:ready",
             self._handle_ready
         )
         self.printer.register_event_handler(
-            "gcode:request_restart", 
+            "gcode:request_restart",
             self._handle_restart
         )
         self.printer.register_event_handler(
@@ -60,18 +60,18 @@ class FilterMonitor:
 
         self.reactor = self.printer.get_reactor()
         self.gcode = self.printer.lookup_object("gcode")
-        
+
         self.name = config.get_name().split()[-1]
         self.pretty_name = None
-		
-        self.fan_section = config.get("fan", "")
+
+        self.fan_section = config.get("fan", "").strip("\"")
         self.fan_type = None
         self.fan_name = None
         self.fan = None
-		
+
         self.max_runtime_hours = config.getfloat("max_runtime_hours", 50.0)
         self.max_days = config.getfloat("max_days", 30.0)
-		
+
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.expiry_gcode = None
         if config.get("expiry_gcode", None) is not None:
@@ -111,28 +111,31 @@ class FilterMonitor:
         )
 
     def _handle_connect(self):
-        if self.fan_section is None:
+        if self.fan_section == "":
             self._log_exception("Fan is required.")
 
         fan_split = self.fan_section.split(" ")
         if len(fan_split) != 2:
             self._log_exception("Fan is invalid.")
-            
+
         self.fan_type, self.fan_name = fan_split
-        
+
         if self.fan_type == "heater_generic":
             heaters = self.printer.lookup_object("heaters")
             self.fan = heaters.lookup_heater(self.fan_name)
-        elif self.fan_type in FAN_TYPES: 
+        elif self.fan_type in FAN_TYPES:
             self.fan = self.printer.lookup_object("fan", self.fan_name)
         else:
-            self._log_exception("Fan type is unsupported.")
-            
+            self._log_exception("Fan type '%s' is unsupported." % self.fan_type)
+
+        if self.fan is None:
+            self._log_exception("Fan '%s' not found." % self.fan_section)
+
         if not os.path.exists(self.path):
-            self._log_exception("Path is invalid.")
+            self._log_exception("Specified path is either invalid or does not exist.")
 
         self.pretty_name = " ".join(self.name.split("_")).title()
-        
+
         self._restore()
 
     def _handle_shutdown(self):
@@ -147,7 +150,7 @@ class FilterMonitor:
     def _handle_ready(self):
         self._update(notify=False)
         self.monitor_timer = self.reactor.register_timer(
-            self._monitor_event, 
+            self._monitor_event,
             self.reactor.NOW + self.interval
         )
 
@@ -158,12 +161,12 @@ class FilterMonitor:
         if self.monitor_timer is not None:
             if event_time is None:
                 self.reactor.update_timer(
-                    self.monitor_timer, 
+                    self.monitor_timer,
                     self.reactor.NEVER
                 )
-                
+
         self._monitor()
-            
+
         if notify or (
             self.filter_expired and
             self.filter_last_notified is None and
@@ -172,7 +175,7 @@ class FilterMonitor:
             self._notify()
 
         self._persist()
-            
+
         if self.monitor_timer is not None:
             if event_time is None and not stop_timer:
                 self.reactor.update_timer(
@@ -182,14 +185,14 @@ class FilterMonitor:
 
         if event_time is not None and not stop_timer:
             return event_time + self.interval
-        
+
         return self.reactor.NEVER
-        
+
     def _restore(self):
         if not os.path.isfile(self.file):
             self._log_info("No persisted file found!")
             return
-            
+
         try:
             with open(self.file, "r", newline="", encoding="utf-8") as f:
                 csv_reader = csv.reader(f, delimiter=",")
@@ -203,13 +206,13 @@ class FilterMonitor:
             self._log_exception("%s %s" % (self.file, str(e)))
         except:
             self._log_exception("Unable to parse %s" % self.file)
- 
+
     def _monitor(self):
         now = time.time()
 
         if self.filter_last_reset is None:
             self.filter_last_reset = now
-            
+
         if self.fan_type == "heater_generic":
             self.filter_active = self.fan.last_pwm_value > 0.0
         else:
@@ -221,7 +224,7 @@ class FilterMonitor:
                 runtime = now - self.filter_last_active
                 self.filter_runtime += runtime
                 self.filter_total_runtime += runtime
-                
+
             self.filter_last_active = now
         else:
             self.filter_last_active = None
@@ -235,10 +238,10 @@ class FilterMonitor:
         days_d2 = datetime.timedelta(seconds=now - self.filter_last_reset)
         days_d = (days_d1 - days_d2).total_seconds()
         days_p = days_d / days_d1.total_seconds()
-        
+
         self.filter_percent_r = max(min(runtime_p, days_p) * 100, 0)
         self.filter_expired = self.filter_percent_r <= 0
-        
+
         if self.filter_expired:
             self.filter_runtime_r = 0
             self.filter_days_r = 0
@@ -263,21 +266,28 @@ class FilterMonitor:
 
     def _notify(self):
         self.gcode.respond_info(self._format_status())
-        
+
         if not self.filter_expired:
             return
-            
+
         if self.expiry_gcode is not None:
             try:
                 self.gcode.run_script(self.expiry_gcode.render())
             except:
                 self._log_exception("Error executing expiry gcode")
-                        
+
         self.filter_last_notified = time.time()
-            
+
     def _format_msg(self, msg, separator=" ", color=None):
         return self._colorize_msg(
             ("%s%s%s" % (self.pretty_name, separator, msg)), color
+        )
+
+    def _format_log(self, msg):
+        return (
+            "filter_monitor %s: %s" % (
+                self.name, msg
+            )
         )
 
     def _format_status(self, extended=False):
@@ -295,7 +305,7 @@ class FilterMonitor:
             maintenance_msg = self._colorize_msg(
                 "\nNeeds maintenance!", color="warning"
             )
-		
+
         return self._format_msg(
             "at %s\nRuntime: %s Days: %.01f%s%s" % (
                 self._format_percent(self.filter_percent_r),
@@ -313,11 +323,11 @@ class FilterMonitor:
             color = "error"
         elif percent <= 25.0:
             color = "error"
-            
+
         return self._colorize_msg(
             "%.01f%%" % percent, color
         )
-        
+
     def _format_runtime(self, runtime):
         return (
             "%02d:%02d" % (
@@ -335,13 +345,14 @@ class FilterMonitor:
                 )
             )
         return msg
-        
+
     def _log_info(self, msg):
-        logging.info(self._format_msg(msg))
+        logging.info(self._format_log(msg))
 
     def _log_exception(self, msg):
-        formatted_msg = self._format_msg(msg)
+        formatted_msg = self._format_log(msg)
         logging.exception(formatted_msg)
+
         raise self.printer.command_error(formatted_msg)
 
     def get_status(self, eventtime):
@@ -358,16 +369,16 @@ class FilterMonitor:
             "filter_runtime_r": self.filter_runtime_r,
             "filter_days_r": self.filter_days_r
         }
-        
+
     def cmd_FILTER_STATS(self, gcmd):
         self._update()
-        
+
         gcmd.respond_info(
             self._format_status(
                 extended=gcmd.get_int("EXTENDED", 0) == 1
             )
         )
-        
+
     def cmd_RESET_FILTER(self, gcmd):
         if self.filter_active:
             gcmd.respond_info(
@@ -378,10 +389,11 @@ class FilterMonitor:
             self.filter_runtime = 0.0
             self.filter_reset_count += 1
             self._update()
-            
+
             gcmd.respond_info(
                 self._format_msg("reset!", color="success")
             )
-        
+
 def load_config_prefix(config):
     return FilterMonitor(config)
+
