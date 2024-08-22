@@ -54,12 +54,8 @@ class FilterMonitor:
             self._handle_restart
         )
         self.printer.register_event_handler(
-            "idle_timeout:printing",
-            self._handle_printing
-        )
-        self.printer.register_event_handler(
             "idle_timeout:idle",
-            self._handle_not_printing
+            self._handle_idle
         )
 
         self.reactor = self.printer.get_reactor()
@@ -145,10 +141,7 @@ class FilterMonitor:
     def _handle_restart(self, print_time):
         self._update(stop_timer=True)
 
-    def _handle_printing(self, print_time):
-        self._update(notify=True)
-        
-    def _handle_not_printing(self, print_time):
+    def _handle_not_idle(self, print_time):
         self._update(notify=True)
 
     def _handle_ready(self):
