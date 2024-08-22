@@ -32,14 +32,14 @@ install_script: install.sh
 
 ```ini
 [filter_monitor bed_filter]
-fan: 'fan_generic bed_fans'
+fan: fan_generic bed_fans
 ```
 
 #### Full Configuration
 
 ```ini
 [filter_monitor bed_filter]
-fan: 'fan_generic bed_fans' # e.g fan_generic bed_filter, heater_generic heated_chamber, etc
+fan: fan_generic bed_fans # e.g fan_generic bed_filter, heater_generic heated_chamber, etc
 max_runtime_hours: 50 # Defaults to 50 hours
 max_days: 30 # Defaults to 30 days
 interval: 30 # Defaults to 30 seconds
