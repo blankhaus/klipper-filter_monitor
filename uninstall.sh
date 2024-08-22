@@ -25,7 +25,7 @@ function preflight_checks {
     fi
 
     echo "[PRE-CHECK] Ready to uninstall plugin."
-    
+
     local uninstall_answer
     read < /dev/tty -rp "[PRE-CHECK] Do you want to continue? [Y/n] " uninstall_answer
     if [[ -z "$uninstall_answer" ]]; then
@@ -44,7 +44,7 @@ function preflight_checks {
 
 function uninstall_plugin {
     printf "[UNINSTALL] Removing plugin files from Klipper... "
-    
+
     if [ -f "${KLIPPER_PATH}/klippy/plugins/filter_monitor.py" ]; then
         rm -f ${KLIPPER_PATH}/klippy/plugins/filter_monitor.py
     fi
@@ -77,7 +77,7 @@ echo "This Klipper plugin monitors the runtime of air "
 echo "filters (Nevermore, THE FILTER, etc), and       "
 echo "triggers notifications and/or executes G-code   "
 echo "when threshold conditions, such as max runtime  "
-echo "or lifetime hours are met. These monitoring     "
+echo "or lifetime hours, are met. These monitoring    "
 echo "checks also occur on pre-defined system events  "
 echo "and keep track of total fan runtime.            "
 echo "================================================"
