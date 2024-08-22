@@ -141,7 +141,7 @@ class FilterMonitor:
     def _handle_restart(self, print_time):
         self._update(stop_timer=True)
 
-    def _handle_not_idle(self, print_time):
+    def _handle_idle(self, print_time):
         self._update(notify=True)
 
     def _handle_ready(self):
