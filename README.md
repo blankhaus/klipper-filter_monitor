@@ -1,6 +1,8 @@
 # Filter Monitor
 
-This Klipper plugin periodically monitors the runtime of air filters (Nevermore, THE FILTER, etc), and triggers notifications and/or executes GCODE when threshold conditions, such as max runtime or lifetime hours, are met. These monitoring checks will also occur on pre-defined system events.
+This Klipper plugin periodically monitors the runtime of air filters (Nevermore, THE FILTER, etc), and triggers notifications and/or executes G-code when threshold conditions, such as max runtime or lifetime hours, are met. These monitoring checks also occur on pre-defined system events and keep track of total fan runtime.
+
+![Example](./example.png)
 
 ## Installation
 
