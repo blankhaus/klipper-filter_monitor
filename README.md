@@ -31,14 +31,14 @@ install_script: install.sh
 #### Quick Configuration
 
 ```ini
-[filter_monitor bed_filter]
+[filter_monitor air_filter]
 fan: fan_generic bed_fans
 ```
 
 #### Full Configuration
 
 ```ini
-[filter_monitor bed_filter]
+[filter_monitor another_air_filter]
 fan: fan_generic bed_fans # e.g fan_generic bed_filter, heater_generic heated_chamber, etc
 max_runtime_hours: 50 # Defaults to 50 hours
 max_days: 30 # Defaults to 30 days
@@ -50,11 +50,11 @@ path: ~/printer_data/config/plugins/filter_monitor # Folder where filter data is
 #### Macros
 
 ```ini
-FILTER_STATS NAME=<name> [EXTENDED=1]
+FILTER_STATS NAME=<filter_name> [EXTENDED=1]
 ```
 
 ```ini
-RESET_FILTER NAME=<name>
+RESET_FILTER NAME=<filter_name>
 ```
 
 ## Removing Plugin
