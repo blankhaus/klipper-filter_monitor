@@ -145,10 +145,10 @@ class FilterMonitor:
         self._update(stop_timer=True)
 
     def _handle_idle(self, print_time):
-        self._update(notify=True)
+        self._update()
 
     def _handle_ready(self):
-        self._update(notify=False)
+        self._update()
         self.monitor_timer = self.reactor.register_timer(
             self._monitor_event,
             self.reactor.NOW + self.interval
