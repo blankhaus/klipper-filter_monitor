@@ -43,6 +43,8 @@ fan: fan_generic bed_fans # e.g fan_generic bed_filter, heater_generic heated_ch
 max_runtime_hours: 50 # Defaults to 50 hours
 max_days: 30 # Defaults to 30 days
 interval: 30 # Defaults to 30 seconds
+stats_caption: ""
+# Output override for FILTER_STATS macro. Defaults to "<filter_name> at". e.g. Air Filter at 98%
 expiry_gcode: # Executed when filter meets threshold condition
 path: ~/printer_data/config/plugins/filter_monitor # Folder where filter data is stored
 ```
