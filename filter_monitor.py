@@ -69,6 +69,8 @@ class FilterMonitor:
         self.fan_name = None
         self.fan = None
 
+        self.stats_caption = config.get("stats_caption", "").strip("\"")
+
         self.max_runtime_hours = config.getfloat("max_runtime_hours", 50.0)
         self.max_days = config.getfloat("max_days", 30.0)
 
@@ -135,6 +137,9 @@ class FilterMonitor:
             self._log_exception("Specified path is either invalid or does not exist.")
 
         self.pretty_name = " ".join(self.name.split("_")).title()
+
+        if self.stats_caption == "":
+            self.stats_caption = "%s at" % self.pretty_name
 
         self._restore()
 
@@ -278,9 +283,13 @@ class FilterMonitor:
 
         self.filter_last_notified = time.time()
 
-    def _format_msg(self, msg, separator=" ", color=None):
+    def _format_msg(self, msg, separator=" ", custom_caption=None, color=None):
+        caption = self.pretty_name
+        if custom_caption is not None:
+            caption = custom_caption
+
         return self._colorize_msg(
-            ("%s%s%s" % (self.pretty_name, separator, msg)), color
+            ("%s%s%s" % (caption, separator, msg)), color
         )
 
     def _format_log(self, msg):
@@ -307,14 +316,14 @@ class FilterMonitor:
             )
 
         return self._format_msg(
-            "at %s\nRuntime: %s Days: %.01f%s%s" % (
+            "%s\nRuntime: %s Days: %.01f%s%s" % (
                 self._format_percent(self.filter_percent_r),
                 self._format_runtime(self.filter_runtime_r),
                 self.filter_days_r / SEC_PER_DAY,
                 extended_msg,
                 maintenance_msg
             ),
-            separator=" "
+            custom_caption=self.stats_caption
         )
 
     def _format_percent(self, percent):
