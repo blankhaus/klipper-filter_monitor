@@ -27,7 +27,7 @@ function preflight_checks {
     echo "[PRE-CHECK] Ready to uninstall plugin."
 
     local uninstall_answer
-    read < /dev/tty -rp "[PRE-CHECK] Do you want to continue? [Y/n] " uninstall_answer
+    read < /dev/tty -rp "[PRE-CHECK] Do you want to continue? [y/N] " uninstall_answer
     if [[ -z "$uninstall_answer" ]]; then
         uninstall_answer="n"
     fi

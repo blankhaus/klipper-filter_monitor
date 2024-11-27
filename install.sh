@@ -28,7 +28,7 @@ function preflight_checks {
     echo "[PRE-CHECK] Ready to install plugin."
 
     local install_answer
-    read < /dev/tty -rp "[PRE-CHECK] Do you want to continue? [Y/n] " install_answer
+    read < /dev/tty -rp "[PRE-CHECK] Do you want to continue? [y/N] " install_answer
     if [[ -z "$install_answer" ]]; then
         install_answer="n"
     fi
